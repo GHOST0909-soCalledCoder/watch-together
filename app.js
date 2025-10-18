@@ -58,8 +58,8 @@ function makePeerConnection() {
       console.warn("❌ No video track found in remote stream.");
     }
 
-    // Unmute remote video to allow audio playback
-    remoteVideo.muted = false;
+    // Keep muted initially to allow autoplay on mobile
+    remoteVideo.muted = true;
 
     remoteVideo.play().then(() => {
       console.log("✅ Remote video playing automatically");
@@ -192,8 +192,10 @@ async function hangUp() {
   logStatus("Idle");
 }
 
-// --- Fallback play on mobile tap ---
+// --- Fallback play on user tap ---
 playOverlay.onclick = () => {
+  // Unmute and play remote video on user interaction
+  remoteVideo.muted = false;
   remoteVideo.play().then(() => {
     playOverlay.style.display = "none";
     logStatus("Playing");
