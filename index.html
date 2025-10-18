@@ -2,23 +2,32 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Watch Together</title>
+  <title>Watch Together (Compatibility Mode)</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
-    body { font-family: system-ui, Arial; margin: 12px; background:#f7f7fb; color:#111; }
+    body { font-family: system-ui, Arial; margin:12px; background:#f7f7fb; color:#111; }
     main { max-width:900px; margin:0 auto; }
-    video { width:100%; max-height:400px; background:#000; border-radius:8px; }
+    .video-wrap { position: relative; width:100%; max-height:400px; background:#000; overflow:hidden; }
+    video { width:100%; height:auto; display:block; background:#000; }
     .row { display:flex; gap:8px; margin-top:8px; flex-wrap:wrap; }
     button,input { padding:8px 12px; border-radius:8px; border:1px solid #ccc; background:white; }
     .small { padding:6px 8px; font-size:0.9rem; }
     label { display:block; margin-top:8px; }
     .info { font-size:0.9rem; color:#555; margin-top:6px; }
+    .play-overlay {
+      position:absolute; left:50%; top:50%;
+      transform:translate(-50%,-50%);
+      background:rgba(0,0,0,0.6);
+      color:white; padding:12px 18px;
+      border-radius:10px; display:none; z-index:10;
+      font-weight:600; cursor:pointer;
+    }
   </style>
 </head>
 <body>
   <main>
-    <h1>🎬 Watch Together</h1>
-    <p class="info">Share your screen + audio. Joiners can see and hear it.</p>
+    <h1>Watch Together — Compatibility Mode</h1>
+    <p class="info">Try this version on your mobile device. Please use Chrome on desktop to present and Chrome on Android to view.</p>
 
     <label>Room ID: <input id="roomIdInput" placeholder="room123" /></label>
 
@@ -30,9 +39,11 @@
       <button id="fullscreenBtn" class="small">Fullscreen</button>
     </div>
 
-    <h3>Remote stream (from presenter)</h3>
-    <video id="remoteVideo" autoplay playsinline muted></video>
-    <button id="playFallbackBtn" style="display:none;margin-top:10px;">▶ Tap to Play Video</button>
+    <h3>Remote stream</h3>
+    <div class="video-wrap">
+      <video id="remoteVideo" autoplay playsinline muted></video>
+      <div id="playOverlay" class="play-overlay">▶ Tap to play</div>
+    </div>
 
     <h3>Your preview (local)</h3>
     <video id="localPreview" autoplay muted playsinline></video>
@@ -45,3 +56,4 @@
   </main>
 </body>
 </html>
+
