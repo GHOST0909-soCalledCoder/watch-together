@@ -1,12 +1,12 @@
 // --- Firebase ---
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com", // <-- Replace with your Firebase Realtime DB URL
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyBVBzK1RuqYKOznJ6hgv_ouoJlm6qUrSqA",
+  authDomain: "watch-together-5479f.firebaseapp.com",
+  databaseURL: "https://watch-together-5479f-default-rtdb.firebaseio.com", // <-- Replace with your Firebase Realtime DB URL
+  projectId: "watch-together-5479f",
+  storageBucket: "watch-together-5479f.appspot.com",
+  messagingSenderId: "343985532299",
+  appId: "1:343985532299:web:9f858ec40f79c38b75538e"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -169,4 +169,5 @@ async function hangUp() {
   localPreview.srcObject = null;
   logStatus("Idle");
 }
+
 
