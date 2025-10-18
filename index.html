@@ -14,7 +14,6 @@
     .small { padding:6px 8px; font-size:0.9rem; }
     label { display:block; margin-top:8px; }
     .info { font-size:0.9rem; color:#555; margin-top:6px; }
-    .muted { opacity:.6; }
     /* overlay tap-to-play button */
     .play-overlay {
       position:absolute;
@@ -29,6 +28,7 @@
       z-index:10;
       font-weight:600;
       cursor:pointer;
+      user-select:none;
     }
   </style>
 </head>
@@ -50,7 +50,7 @@
     <h3>Remote stream</h3>
     <div class="video-wrap">
       <video id="remoteVideo" autoplay playsinline muted></video>
-      <div id="playOverlay" class="play-overlay">Tap to start playback</div>
+      <div id="playOverlay" class="play-overlay">Tap ▶ to start playback</div>
     </div>
 
     <h3>Your preview (local)</h3>
