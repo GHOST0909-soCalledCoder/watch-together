@@ -1,19 +1,9 @@
-// --- Firebase ---
-const firebaseConfig = {
-  apiKey: "AIzaSyBVBzK1RuqYKOznJ6hgv_ouoJlm6qUrSqA",
-  authDomain: "watch-together-5479f.firebaseapp.com",
-  databaseURL: "https://watch-together-5479f-default-rtdb.firebaseio.com",
-  projectId: "watch-together-5479f",
-  storageBucket: "watch-together-5479f.appspot.com",
-  messagingSenderId: "343985532299",
-  appId: "1:343985532299:web:9f858ec40f79c38b75538e"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+// Firebase setup here (same as before)...
 
-// --- Variables ---
+// Variables
 const servers = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
-let pc, localStream, micStream, roomRef, roomId;
+let pc, localStream, micStream, remoteStream = null;
+let roomRef, roomId;
 let isCreator = false;
 
 const remoteVideo = document.getElementById("remoteVideo");
@@ -26,28 +16,7 @@ function logStatus(msg) {
   statusDiv.textContent = "Status: " + msg;
 }
 
-// --- Button Events ---
-document.getElementById("createBtn").onclick = createRoom;
-document.getElementById("joinBtn").onclick = joinRoom;
-document.getElementById("hangupBtn").onclick = hangUp;
-document.getElementById("toggleMicBtn").onclick = toggleMic;
-document.getElementById("fullscreenBtn")?.addEventListener("click", () => {
-  if (remoteVideo.requestFullscreen) remoteVideo.requestFullscreen();
-});
-
-// Play overlay tap to manually play video on mobile
-playOverlay.addEventListener("click", () => {
-  remoteVideo.play().then(() => {
-    playOverlay.style.display = "none";
-    logStatus("Streaming");
-  }).catch(() => {
-    logStatus("Tap ▶ to play");
-  });
-});
-
-// --- Peer Connection ---
-let remoteStream = null;
-
+// Create peer connection and setup handlers
 function makePeerConnection() {
   pc = new RTCPeerConnection(servers);
 
@@ -58,42 +27,39 @@ function makePeerConnection() {
     }
   };
 
+  // Handle incoming tracks
   pc.ontrack = event => {
     console.log("🎥 Remote track received:", event.streams);
 
     if (!remoteStream) {
-      remoteStream = event.streams[0];
+      remoteStream = new MediaStream();
       remoteVideo.srcObject = remoteStream;
+    }
 
-      const videoTrack = remoteStream.getVideoTracks()[0];
-      if (videoTrack) {
-        console.log("✅ VideoTrack settings:", videoTrack.getSettings());
-        playOverlay.style.display = "none";
-        logStatus("Streaming");
-      } else {
-        console.warn("❌ No video track found in remote stream.");
-        playOverlay.style.display = "block";
-        logStatus("Waiting for video track...");
+    event.streams[0].getTracks().forEach(track => {
+      if (!remoteStream.getTracks().find(t => t.id === track.id)) {
+        remoteStream.addTrack(track);
+        console.log(`Added remote ${track.kind} track: ${track.id}`);
       }
+    });
 
-      // Mute remoteVideo initially to allow autoplay on mobile browsers
-      remoteVideo.muted = true;
+    // Check if video track exists
+    const videoTracks = remoteStream.getVideoTracks();
+    if (videoTracks.length === 0) {
+      console.warn("❌ No video track found in remote stream.");
+      playOverlay.style.display = "block";
+      logStatus("Waiting for video track...");
+    } else {
+      playOverlay.style.display = "none";
+      logStatus("Streaming");
 
+      remoteVideo.muted = false; // unmute remote video for viewing
       remoteVideo.play().then(() => {
         console.log("✅ Remote video playing automatically");
-        playOverlay.style.display = "none";
       }).catch(err => {
         console.warn("❌ Autoplay failed:", err);
         playOverlay.style.display = "block";
         logStatus("Tap ▶ to play");
-      });
-    } else {
-      // Add any new tracks to existing remoteStream
-      event.streams[0].getTracks().forEach(track => {
-        if (!remoteStream.getTracks().some(t => t.id === track.id)) {
-          remoteStream.addTrack(track);
-          console.log("Added track to remoteStream:", track.kind);
-        }
       });
     }
   };
@@ -106,20 +72,21 @@ function makePeerConnection() {
   return pc;
 }
 
-// --- Create Room ---
+// --- Create Room (PC Presenter) ---
 async function createRoom() {
   isCreator = true;
   roomId = document.getElementById("roomIdInput").value.trim() || Math.random().toString(36).substring(2, 8);
   roomRef = db.ref("rooms/" + roomId);
   logStatus("Creating room: " + roomId);
 
+  // Get screen and mic
   try {
     localStream = await navigator.mediaDevices.getDisplayMedia({
-      video: { width: 640, height: 360, frameRate: 10 },
+      video: { width: 1280, height: 720 },
       audio: true
     });
   } catch (err) {
-    alert("Screen share failed. Try Chrome on desktop.");
+    alert("Screen share failed. Use Chrome on desktop.");
     return;
   }
 
@@ -131,10 +98,21 @@ async function createRoom() {
 
   localPreview.srcObject = localStream;
 
-  makePeerConnection();
+  pc = makePeerConnection();
 
-  localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
-  if (micStream) micStream.getTracks().forEach(t => pc.addTrack(t, micStream));
+  // Add video tracks from screen share
+  localStream.getTracks().forEach(track => {
+    pc.addTrack(track, localStream);
+    console.log(`Added local ${track.kind} track to pc: ${track.id}`);
+  });
+
+  // Add mic audio if available
+  if (micStream) {
+    micStream.getTracks().forEach(track => {
+      pc.addTrack(track, micStream);
+      console.log(`Added mic ${track.kind} track to pc: ${track.id}`);
+    });
+  }
 
   const offer = await pc.createOffer();
   await pc.setLocalDescription(offer);
@@ -157,7 +135,7 @@ async function createRoom() {
   logStatus("Room ready — share ID: " + roomId);
 }
 
-// --- Join Room ---
+// --- Join Room (Android Viewer) ---
 async function joinRoom() {
   isCreator = false;
   roomId = document.getElementById("roomIdInput").value.trim();
@@ -172,8 +150,9 @@ async function joinRoom() {
     micStream = null;
   }
 
-  makePeerConnection();
+  pc = makePeerConnection();
 
+  // Add mic tracks for audio to send back if needed
   if (micStream) micStream.getTracks().forEach(t => pc.addTrack(t, micStream));
 
   const snap = await roomRef.once("value");
@@ -196,7 +175,7 @@ async function joinRoom() {
   logStatus("Connected. Waiting for video...");
 }
 
-// --- Mic & Hangup ---
+// --- Mic toggle ---
 function toggleMic() {
   if (!micStream) return;
   const track = micStream.getAudioTracks()[0];
@@ -204,6 +183,7 @@ function toggleMic() {
   document.getElementById("toggleMicBtn").textContent = track.enabled ? "Mute Mic" : "Unmute Mic";
 }
 
+// --- Hang Up ---
 async function hangUp() {
   logStatus("Hanging up...");
   if (localStream) localStream.getTracks().forEach(t => t.stop());
@@ -219,7 +199,17 @@ async function hangUp() {
   logStatus("Idle");
 }
 
-// --- Fallback play on mobile tap ---
+// --- Play overlay tap to play (for Android mobile autoplay restrictions) ---
+playOverlay.addEventListener("click", () => {
+  remoteVideo.play().then(() => {
+    playOverlay.style.display = "none";
+    logStatus("Streaming");
+  }).catch(() => {
+    logStatus("Tap ▶ to play");
+  });
+});
+
+// Add event listener for remoteVideo click for manual play fallback
 remoteVideo.addEventListener("click", () => {
   remoteVideo.play().catch(() => {});
 });
