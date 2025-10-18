@@ -1,6 +1,6 @@
 // Firebase config - replace with your own config
 const firebaseConfig = {
-  apiKey: "AIzaSyBVBzK1RuqYKOznJ6hgv_ouoJlm6qUrSqA",
+  apiKey: "",
   authDomain: "watch-together-5479f.firebaseapp.com",
   databaseURL: "https://watch-together-5479f-default-rtdb.firebaseio.com",
   projectId: "watch-together-5479f",
@@ -162,3 +162,4 @@ async function hangUp() {
   localPreview.srcObject = null;
   logStatus("Idle");
 }
+
