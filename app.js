@@ -65,20 +65,11 @@ function createPeerConnection() {
       }
     });
 
-    const videoTracks = remoteStream.getVideoTracks();
-    if (videoTracks.length === 0) {
-      logStatus("Waiting for video track...");
-      playOverlay.style.display = "flex";
-    } else {
-      logStatus("Streaming");
-      playOverlay.style.display = "none";
+    // Removed "No video track found" warning
 
-      remoteVideo.muted = false;
-      remoteVideo.play().catch(() => {
-        playOverlay.style.display = "flex";
-        logStatus("Tap ▶ to play");
-      });
-    }
+    // Don't autoplay remote video. Just show play overlay
+    playOverlay.style.display = "flex";
+    logStatus("Tap ▶ to play");
   };
 
   pc.oniceconnectionstatechange = () => {
@@ -98,7 +89,7 @@ async function createRoom() {
   try {
     localStream = await navigator.mediaDevices.getDisplayMedia({
       video: { width: 1280, height: 720, frameRate: 30 },
-      audio: false // No audio here, add if needed
+      audio: false
     });
   } catch (e) {
     alert("Screen capture failed: " + e.message);
@@ -208,7 +199,7 @@ async function hangUp() {
   logStatus("Idle");
 }
 
-// Play overlay tap to enable autoplay
+// Play overlay tap to enable manual play
 playOverlay.addEventListener("click", () => {
   remoteVideo.play().then(() => {
     playOverlay.style.display = "none";
