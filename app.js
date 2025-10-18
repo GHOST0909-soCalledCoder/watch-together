@@ -145,8 +145,55 @@ async function joinRoom() {
   logStatus('Joining room: ' + roomId);
   joinBtn.disabled = true;
 
-  await startScreenAndMic(); // preview local screen too (optional)
+  // For the joiner: only microphone (no screen sharing)
+  try {
+    micStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+    localPreview.srcObject = micStream;
+  } catch (e) {
+    console.warn('Microphone access failed or denied.', e);
+  }
+
   await createPeerConnection();
+
+  if (micStream) {
+    micStream.getAudioTracks().forEach(track => {
+      pc.addTrack(track, micStream);
+    });
+  }
+
+  // read offer
+  const snapshot = await roomRef.once('value');
+  const roomData = snapshot.val();
+  if (!roomData || !roomData.offer) { 
+    alert('Room does not contain an offer. Make sure the creator already started the room.'); 
+    return; 
+  }
+
+  const offer = roomData.offer;
+  await pc.setRemoteDescription(new RTCSessionDescription(offer));
+  const answer = await pc.createAnswer();
+  await pc.setLocalDescription(answer);
+
+  // write answer
+  await roomRef.update({ answer: { type: answer.type, sdp: answer.sdp } });
+
+  // push ICE candidates to callerCandidates on our side (callee)
+  pc.onicecandidate = (event) => {
+    if (!event.candidate) return;
+    const c = event.candidate.toJSON();
+    const candidatesRef = roomRef.child('calleeCandidates');
+    candidatesRef.push(c);
+  };
+
+  // listen for caller ICE candidates
+  roomRef.child('callerCandidates').on('child_added', snapshot => {
+    const c = snapshot.val();
+    pc.addIceCandidate(new RTCIceCandidate(c));
+  });
+
+  logStatus('Joined room and sent answer. You should now see the movie stream.');
+}
+
 
   // add local tracks (the joiner also may share screen, but in this simple flow both sides add their tracks)
   if (localStream) {
@@ -224,3 +271,4 @@ window.addEventListener('beforeunload', async () => {
   }
   hangUp();
 });
+
