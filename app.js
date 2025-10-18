@@ -1,4 +1,4 @@
-// --- Firebase ---
+// --- Firebase Config ---
 const firebaseConfig = {
   apiKey: "AIzaSyBVBzK1RuqYKOznJ6hgv_ouoJlm6qUrSqA",
   authDomain: "watch-together-5479f.firebaseapp.com",
@@ -19,9 +19,11 @@ let isCreator = false;
 const remoteVideo = document.getElementById("remoteVideo");
 const localPreview = document.getElementById("localPreview");
 const statusDiv = document.getElementById("status");
+const playOverlay = document.getElementById("playOverlay");
+const fullscreenBtn = document.getElementById("fullscreenBtn");
 
 function logStatus(msg) {
-  console.log("[STATUS]", msg);
+  console.log("[STATUS] " + msg);
   statusDiv.textContent = "Status: " + msg;
 }
 
@@ -30,8 +32,17 @@ document.getElementById("createBtn").onclick = createRoom;
 document.getElementById("joinBtn").onclick = joinRoom;
 document.getElementById("hangupBtn").onclick = hangUp;
 document.getElementById("toggleMicBtn").onclick = toggleMic;
-document.getElementById("fullscreenBtn").onclick = () => {
+fullscreenBtn.onclick = () => {
   if (remoteVideo.requestFullscreen) remoteVideo.requestFullscreen();
+  else if (remoteVideo.webkitRequestFullscreen) remoteVideo.webkitRequestFullscreen();
+  else if (remoteVideo.msRequestFullscreen) remoteVideo.msRequestFullscreen();
+};
+playOverlay.onclick = () => {
+  remoteVideo.play().then(() => {
+    playOverlay.style.display = "none";
+  }).catch(err => {
+    console.warn("Manual play error", err);
+  });
 };
 
 // --- Peer Connection ---
@@ -46,25 +57,45 @@ function makePeerConnection() {
   };
 
   pc.ontrack = e => {
-    console.log("🎥 Remote track received:", e.streams);
+    console.log("Remote track received:", e.streams);
     const stream = e.streams[0];
     remoteVideo.srcObject = stream;
 
-    const track = stream.getVideoTracks()[0];
-    if (track) {
-      console.log("✅ Video track found:", track.getSettings());
+    const vTrack = stream.getVideoTracks()[0];
+    if (vTrack) {
+      console.log("VideoTrack settings:", vTrack.getSettings());
+      console.log("VideoTrack enabled:", vTrack.enabled, "readyState:", vTrack.readyState);
     } else {
-      console.warn("❌ No video track found in remote stream.");
+      console.warn("No video track found in remote stream.");
     }
 
-    remoteVideo.play().catch(err => {
-      console.warn("Remote video play error:", err);
-      logStatus("Tap video to play manually.");
+    // Mute video to allow autoplay
+    remoteVideo.muted = true;
+    // Show overlay until it plays
+    playOverlay.style.display = "block";
+
+    remoteVideo.play().then(() => {
+      console.log("RemoteVideo playing automatically.");
+      playOverlay.style.display = "none";
+      logStatus("Streaming");
+    }).catch(err => {
+      console.warn("Autoplay failed:", err);
+      logStatus("Tap ▶ to play");
+    });
+
+    // Additional stats for debugging
+    pc.getStats().then(stats => {
+      stats.forEach(report => {
+        if (report.type === "inbound-rtp" && report.kind === "video") {
+          console.log("Inbound video RTP report:", report);
+        }
+      });
     });
   };
 
   pc.oniceconnectionstatechange = () => {
     console.log("ICE State:", pc.iceConnectionState);
+    logStatus("ICE state: " + pc.iceConnectionState);
   };
 
   return pc;
@@ -73,17 +104,18 @@ function makePeerConnection() {
 // --- Create Room ---
 async function createRoom() {
   isCreator = true;
-  roomId = document.getElementById("roomIdInput").value.trim() || Math.random().toString(36).substring(2, 8);
+  roomId = document.getElementById("roomIdInput").value.trim() || Math.random().toString(36).substring(2,8);
   roomRef = db.ref("rooms/" + roomId);
   logStatus("Creating room: " + roomId);
 
   try {
     localStream = await navigator.mediaDevices.getDisplayMedia({
-      video: { width: 640, height: 360, frameRate: 10 },
+      video: { width: 320, height: 180, frameRate: 5 },
       audio: true
     });
-  } catch (err) {
-    alert("Screen share failed. Try Chrome on desktop.");
+  } catch(err) {
+    alert("Screen share failed. Try desktop Chrome/Edge.");
+    console.error("getDisplayMedia error:", err);
     return;
   }
 
@@ -94,6 +126,7 @@ async function createRoom() {
   }
 
   localPreview.srcObject = localStream;
+  localPreview.muted = true;
 
   makePeerConnection();
 
@@ -125,25 +158,28 @@ async function createRoom() {
 async function joinRoom() {
   isCreator = false;
   roomId = document.getElementById("roomIdInput").value.trim();
-  if (!roomId) return alert("Enter a room ID");
+  if (!roomId) {
+    alert("Enter a room ID");
+    return;
+  }
   roomRef = db.ref("rooms/" + roomId);
   logStatus("Joining room: " + roomId);
 
   try {
     micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
     localPreview.srcObject = micStream;
+    localPreview.muted = true;
   } catch {
     micStream = null;
   }
 
   makePeerConnection();
-
   if (micStream) micStream.getTracks().forEach(t => pc.addTrack(t, micStream));
 
   const snap = await roomRef.once("value");
   const data = snap.val();
   if (!data?.offer) {
-    alert("No stream yet. Wait for the presenter.");
+    alert("No stream yet. Wait for presenter.");
     return;
   }
 
@@ -180,7 +216,8 @@ async function hangUp() {
   logStatus("Idle");
 }
 
-// --- Fallback play on mobile tap ---
+// Make sure overlay click is available as fallback
 remoteVideo.addEventListener("click", () => {
   remoteVideo.play().catch(() => {});
 });
+
