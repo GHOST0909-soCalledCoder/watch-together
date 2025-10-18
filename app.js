@@ -20,10 +20,9 @@ const remoteVideo = document.getElementById("remoteVideo");
 const localPreview = document.getElementById("localPreview");
 const statusDiv = document.getElementById("status");
 const playOverlay = document.getElementById("playOverlay");
-const fullscreenBtn = document.getElementById("fullscreenBtn");
 
 function logStatus(msg) {
-  console.log("[STATUS] " + msg);
+  console.log("[STATUS]", msg);
   statusDiv.textContent = "Status: " + msg;
 }
 
@@ -32,17 +31,8 @@ document.getElementById("createBtn").onclick = createRoom;
 document.getElementById("joinBtn").onclick = joinRoom;
 document.getElementById("hangupBtn").onclick = hangUp;
 document.getElementById("toggleMicBtn").onclick = toggleMic;
-fullscreenBtn.onclick = () => {
+document.getElementById("fullscreenBtn").onclick = () => {
   if (remoteVideo.requestFullscreen) remoteVideo.requestFullscreen();
-  else if (remoteVideo.webkitRequestFullscreen) remoteVideo.webkitRequestFullscreen();
-  else if (remoteVideo.msRequestFullscreen) remoteVideo.msRequestFullscreen();
-};
-playOverlay.onclick = () => {
-  remoteVideo.play().then(() => {
-    playOverlay.style.display = "none";
-  }).catch(err => {
-    console.warn("Manual play error", err);
-  });
 };
 
 // --- Peer Connection ---
@@ -57,39 +47,28 @@ function makePeerConnection() {
   };
 
   pc.ontrack = e => {
-    console.log("Remote track received:", e.streams);
+    console.log("🎥 Remote track received:", e.streams);
     const stream = e.streams[0];
     remoteVideo.srcObject = stream;
 
-    const vTrack = stream.getVideoTracks()[0];
-    if (vTrack) {
-      console.log("VideoTrack settings:", vTrack.getSettings());
-      console.log("VideoTrack enabled:", vTrack.enabled, "readyState:", vTrack.readyState);
+    const videoTrack = stream.getVideoTracks()[0];
+    if (videoTrack) {
+      console.log("✅ VideoTrack settings:", videoTrack.getSettings());
     } else {
-      console.warn("No video track found in remote stream.");
+      console.warn("❌ No video track found in remote stream.");
     }
 
-    // Mute video to allow autoplay
-    remoteVideo.muted = true;
-    // Show overlay until it plays
-    playOverlay.style.display = "block";
+    // Unmute remote video to allow audio playback
+    remoteVideo.muted = false;
 
     remoteVideo.play().then(() => {
-      console.log("RemoteVideo playing automatically.");
+      console.log("✅ Remote video playing automatically");
       playOverlay.style.display = "none";
       logStatus("Streaming");
     }).catch(err => {
-      console.warn("Autoplay failed:", err);
+      console.warn("❌ Autoplay failed:", err);
       logStatus("Tap ▶ to play");
-    });
-
-    // Additional stats for debugging
-    pc.getStats().then(stats => {
-      stats.forEach(report => {
-        if (report.type === "inbound-rtp" && report.kind === "video") {
-          console.log("Inbound video RTP report:", report);
-        }
-      });
+      playOverlay.style.display = "block";
     });
   };
 
@@ -104,18 +83,17 @@ function makePeerConnection() {
 // --- Create Room ---
 async function createRoom() {
   isCreator = true;
-  roomId = document.getElementById("roomIdInput").value.trim() || Math.random().toString(36).substring(2,8);
+  roomId = document.getElementById("roomIdInput").value.trim() || Math.random().toString(36).substring(2, 8);
   roomRef = db.ref("rooms/" + roomId);
   logStatus("Creating room: " + roomId);
 
   try {
     localStream = await navigator.mediaDevices.getDisplayMedia({
-      video: { width: 320, height: 180, frameRate: 5 },
+      video: { width: 1280, height: 720, frameRate: 15 },
       audio: true
     });
-  } catch(err) {
-    alert("Screen share failed. Try desktop Chrome/Edge.");
-    console.error("getDisplayMedia error:", err);
+  } catch (err) {
+    alert("Screen share failed. Use Chrome/Edge on desktop.");
     return;
   }
 
@@ -128,7 +106,7 @@ async function createRoom() {
   localPreview.srcObject = localStream;
   localPreview.muted = true;
 
-  makePeerConnection();
+  pc = makePeerConnection();
 
   localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
   if (micStream) micStream.getTracks().forEach(t => pc.addTrack(t, micStream));
@@ -158,28 +136,25 @@ async function createRoom() {
 async function joinRoom() {
   isCreator = false;
   roomId = document.getElementById("roomIdInput").value.trim();
-  if (!roomId) {
-    alert("Enter a room ID");
-    return;
-  }
+  if (!roomId) return alert("Enter a room ID");
   roomRef = db.ref("rooms/" + roomId);
   logStatus("Joining room: " + roomId);
 
   try {
     micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
     localPreview.srcObject = micStream;
-    localPreview.muted = true;
   } catch {
     micStream = null;
   }
 
-  makePeerConnection();
+  pc = makePeerConnection();
+
   if (micStream) micStream.getTracks().forEach(t => pc.addTrack(t, micStream));
 
   const snap = await roomRef.once("value");
   const data = snap.val();
   if (!data?.offer) {
-    alert("No stream yet. Wait for presenter.");
+    alert("No stream yet. Wait for the presenter.");
     return;
   }
 
@@ -213,10 +188,20 @@ async function hangUp() {
 
   remoteVideo.srcObject = null;
   localPreview.srcObject = null;
+  playOverlay.style.display = "none";
   logStatus("Idle");
 }
 
-// Make sure overlay click is available as fallback
+// --- Fallback play on mobile tap ---
+playOverlay.onclick = () => {
+  remoteVideo.play().then(() => {
+    playOverlay.style.display = "none";
+    logStatus("Playing");
+  }).catch(() => {
+    logStatus("Tap to play");
+  });
+};
+
 remoteVideo.addEventListener("click", () => {
   remoteVideo.play().catch(() => {});
 });
