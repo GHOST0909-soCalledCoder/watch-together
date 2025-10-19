@@ -3,57 +3,84 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>💞 Watch Together</title>
+<title>🎬 Watch Together</title>
 
-<!-- Google Font -->
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 
 <style>
   body {
-    font-family: 'Poppins', sans-serif;
-    background: radial-gradient(circle at top, #1a1a2e, #000);
-    color: #f2f2f2;
+    font-family: "Poppins", sans-serif;
+    background: radial-gradient(circle at top, #0f172a, #000);
+    color: #eee;
     margin: 0;
     padding: 0;
     overflow-x: hidden;
   }
 
+  /* Background glow animation */
+  .bg-glow {
+    position: fixed;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(59,130,246,0.35), transparent 70%);
+    filter: blur(80px);
+    border-radius: 50%;
+    animation: floatGlow 12s infinite alternate ease-in-out;
+    z-index: -1;
+  }
+  .bg-glow:nth-child(1) { top: -100px; left: -100px; }
+  .bg-glow:nth-child(2) { bottom: -100px; right: -100px; animation-delay: 3s; }
+
+  @keyframes floatGlow {
+    0% { transform: translate(0, 0) scale(1); opacity: 0.7; }
+    100% { transform: translate(40px, 30px) scale(1.2); opacity: 1; }
+  }
+
   main {
-    max-width: 950px;
+    max-width: 900px;
     margin: auto;
     text-align: center;
-    padding: 30px 20px;
+    padding: 40px 20px;
+    animation: fadeIn 1s ease-in;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 
   h1 {
-    font-size: 2.4rem;
-    color: #ff8fa3;
-    text-shadow: 0 0 20px rgba(255, 105, 180, 0.5);
-    letter-spacing: 1px;
-    margin-bottom: 10px;
-    animation: fadeInDown 1s ease;
+    font-size: 2.3rem;
+    background: linear-gradient(90deg, #60a5fa, #38bdf8, #818cf8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shimmer 4s linear infinite;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: 0%; }
+    100% { background-position: 200%; }
   }
 
   p {
-    color: #ddd;
+    color: #a3a3a3;
+    margin-bottom: 20px;
     font-weight: 300;
-    margin-bottom: 25px;
   }
 
-  /* Inputs & Buttons */
   input {
     background: rgba(255, 255, 255, 0.08);
     color: #fff;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 8px;
-    padding: 10px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+    padding: 10px 15px;
     font-size: 15px;
     outline: none;
     transition: 0.3s;
   }
   input:focus {
-    border-color: #ff8fa3;
-    box-shadow: 0 0 10px #ff8fa3;
+    border-color: #38bdf8;
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
   }
 
   button {
@@ -64,33 +91,48 @@
     cursor: pointer;
     font-size: 15px;
     font-weight: 600;
-    background: linear-gradient(45deg, #ff8fa3, #ff5d8f);
     color: #fff;
-    box-shadow: 0 4px 12px rgba(255, 94, 158, 0.3);
+    background: linear-gradient(45deg, #2563eb, #0ea5e9);
     transition: all 0.3s ease;
+    box-shadow: 0 3px 15px rgba(14,165,233,0.3);
   }
 
   button:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(255, 94, 158, 0.5);
+    box-shadow: 0 5px 20px rgba(37,99,235,0.5);
+  }
+
+  button:active {
+    transform: scale(0.96);
+  }
+
+  h3 {
+    margin-top: 25px;
+    color: #93c5fd;
+    letter-spacing: 0.5px;
+    text-shadow: 0 0 10px rgba(147,197,253,0.3);
   }
 
   .video-wrap {
     position: relative;
     width: 100%;
-    background: rgba(0, 0, 0, 0.85);
-    border: 2px solid rgba(255, 255, 255, 0.15);
-    border-radius: 16px;
+    background: #000;
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 14px;
     overflow: hidden;
-    margin-top: 18px;
-    box-shadow: 0 0 30px rgba(255, 105, 180, 0.15);
-    transition: 0.4s;
+    margin-top: 10px;
+    box-shadow: 0 0 30px rgba(56, 189, 248, 0.15);
+    animation: pulseBorder 6s infinite alternate ease-in-out;
+  }
+
+  @keyframes pulseBorder {
+    0% { box-shadow: 0 0 20px rgba(56, 189, 248, 0.2); }
+    100% { box-shadow: 0 0 40px rgba(56, 189, 248, 0.5); }
   }
 
   video {
     width: 100%;
     height: auto;
-    border-radius: 10px;
     background: #000;
   }
 
@@ -98,84 +140,51 @@
     position: absolute;
     bottom: 10px;
     right: 10px;
-    background: rgba(255, 255, 255, 0.25);
-    color: #fff;
-    font-size: 22px;
+    background: rgba(255,255,255,0.2);
+    color: white;
+    font-size: 20px;
     border-radius: 50%;
-    width: 42px;
-    height: 42px;
+    width: 40px;
+    height: 40px;
     border: none;
     cursor: pointer;
     transition: 0.3s;
+    backdrop-filter: blur(5px);
   }
 
   #fullscreenBtn:hover {
-    background: rgba(255, 255, 255, 0.5);
+    background: rgba(255,255,255,0.4);
   }
 
   #status {
-    margin-top: 20px;
-    color: #aaa;
+    margin-top: 18px;
+    color: #94a3b8;
     font-size: 14px;
-    letter-spacing: 0.3px;
-  }
-
-  /* Animations */
-  @keyframes fadeInDown {
-    from { opacity: 0; transform: translateY(-20px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  /* Floating glow effect */
-  .glow {
-    position: absolute;
-    top: -100px;
-    left: -100px;
-    width: 300px;
-    height: 300px;
-    background: radial-gradient(circle, rgba(255, 94, 158, 0.4), transparent 70%);
-    filter: blur(50px);
-    animation: float 8s infinite alternate ease-in-out;
-    z-index: -1;
-  }
-
-  .glow:nth-child(2) {
-    top: auto;
-    bottom: -100px;
-    right: -100px;
-    left: auto;
-    background: radial-gradient(circle, rgba(147, 51, 234, 0.4), transparent 70%);
-    animation-delay: 2s;
-  }
-
-  @keyframes float {
-    from { transform: translate(0, 0); }
-    to { transform: translate(20px, 40px); }
   }
 </style>
 </head>
 <body>
-<div class="glow"></div>
-<div class="glow"></div>
+<div class="bg-glow"></div>
+<div class="bg-glow"></div>
 
 <main>
-  <h1>💞 Watch Together</h1>
-  <p>Enjoy your favorite movies side by side — with voice, screen, and heart. 💫</p>
+  <h1>🎥 Watch Together</h1>
+  <p>Share your screen and voice — watch, study, or chill together with ease.</p>
 
-  <input id="roomIdInput" placeholder="Enter Room ID..." />
+  <input id="roomIdInput" placeholder="Enter room ID..." />
   <div>
-    <button id="createBtn">🎬 Create & Start</button>
-    <button id="joinBtn">❤️ Join Room</button>
-    <button id="hangupBtn">🔚 Hang Up</button>
+    <button id="createBtn">Create & Start</button>
+    <button id="joinBtn">Join Room</button>
+    <button id="hangupBtn">Hang Up</button>
   </div>
 
-  <h3>🎥 Shared Screen</h3>
+  <h3>Remote Stream (Shared Screen)</h3>
   <div class="video-wrap">
     <video id="remoteVideo" autoplay playsinline></video>
     <button id="fullscreenBtn">⛶</button>
   </div>
 
-  <h3>🌸 Your Preview</h3>
+  <h3>Your Preview</h3>
   <div class="video-wrap">
     <video id="localVideo" autoplay muted playsinline></video>
   </div>
