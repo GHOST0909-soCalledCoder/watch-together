@@ -5,14 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>🎬 Watch Together</title>
 <style>
-  /* ===== Basic Styling ===== */
+  /* ===== Base Styling ===== */
   body {
     font-family: "Poppins", sans-serif;
     background: linear-gradient(120deg, #0b1c3b 60%, #2a2a6f);
     color: #fff;
     margin: 0;
     padding: 20px;
-    overflow-x: hidden;
+    overflow: hidden;
   }
 
   main {
@@ -109,31 +109,32 @@
     100% { transform: translateY(-120vh) translateX(calc(-50px + 100vw * var(--x))) scale(0.8); opacity: 0; }
   }
 
-  /* ===== Flying Dragon ===== */
-  .dragon-animation {
+  /* ===== Bouncing Bouquet ===== */
+  .bouquet {
     position: fixed;
-    top: 25%;
-    left: -300px;
-    width: 250px;
-    opacity: 0.9;
-    animation: flyDragon 22s linear infinite;
+    font-size: 40px;
+    z-index: 3;
+    animation: bounceBouquet 8s ease-in-out infinite;
+    user-select: none;
     pointer-events: none;
-    z-index: 2;
   }
 
-  @keyframes flyDragon {
-    0%   { transform: translateX(-300px) scale(0.9); }
-    50%  { transform: translateX(110vw) scale(1.1) rotate(3deg); }
-    100% { transform: translateX(-300px) scale(0.9); }
+  @keyframes bounceBouquet {
+    0%   { top: 10%; left: 5%; transform: rotate(0deg) scale(1); }
+    20%  { top: 30%; left: 80%; transform: rotate(15deg) scale(1.1); }
+    40%  { top: 70%; left: 60%; transform: rotate(-10deg) scale(1); }
+    60%  { top: 50%; left: 10%; transform: rotate(10deg) scale(1.2); }
+    80%  { top: 20%; left: 40%; transform: rotate(-5deg) scale(1); }
+    100% { top: 10%; left: 5%; transform: rotate(0deg) scale(1); }
   }
 </style>
 </head>
 <body>
 
-<!-- 🐉 Flying Dragon -->
-<img src="dragon-flying.gif" class="dragon-animation" alt="Flying Dragon">
+<!-- 💐 Bouncing Bouquet -->
+<div class="bouquet">💐</div>
 
-<!-- ❤️ Floating Hearts Generator -->
+<!-- ❤️ Floating Hearts -->
 <script>
   setInterval(() => {
     const heart = document.createElement('div');
