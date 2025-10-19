@@ -98,7 +98,7 @@ async function createRoom() {
       video: {
         width: { ideal: 1920 },
         height: { ideal: 1080 },
-        frameRate: { ideal: 60, max: 120 }
+        frameRate: { ideal: 120, max: 120 }
       },
       audio: true
     });
@@ -202,5 +202,6 @@ async function hangUp() {
   localVideo.srcObject = null;
   log("Idle");
 }
+
 
 
