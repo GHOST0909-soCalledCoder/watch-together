@@ -3,179 +3,148 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>💞 Watch Together</title>
-
-<!-- Google Font -->
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-
+<title>🎬 Watch Together</title>
 <style>
+  /* ===== Base Styling ===== */
   body {
-    font-family: 'Poppins', sans-serif;
-    background: radial-gradient(circle at top, #1a1a2e, #000);
-    color: #f2f2f2;
+    font-family: "Poppins", sans-serif;
+    background: linear-gradient(120deg, #0b1c3b 60%, #2a2a6f);
+    color: #fff;
     margin: 0;
-    padding: 0;
-    overflow-x: hidden;
+    padding: 20px;
+    overflow: hidden;
   }
 
   main {
-    max-width: 950px;
+    max-width: 900px;
     margin: auto;
     text-align: center;
-    padding: 30px 20px;
+    position: relative;
+    z-index: 10;
   }
 
   h1 {
-    font-size: 2.4rem;
-    color: #ff8fa3;
-    text-shadow: 0 0 20px rgba(255, 105, 180, 0.5);
-    letter-spacing: 1px;
-    margin-bottom: 10px;
-    animation: fadeInDown 1s ease;
+    font-size: 2.5em;
+    color: #ff9fdc;
+    text-shadow: 0 0 15px #ff80bf;
+    animation: glowText 2.5s ease-in-out infinite alternate;
   }
 
-  p {
-    color: #ddd;
-    font-weight: 300;
-    margin-bottom: 25px;
+  @keyframes glowText {
+    from { text-shadow: 0 0 10px #ff80bf; }
+    to { text-shadow: 0 0 25px #ffb7e2; }
   }
 
-  /* Inputs & Buttons */
-  input {
-    background: rgba(255, 255, 255, 0.08);
-    color: #fff;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 8px;
-    padding: 10px 14px;
-    font-size: 15px;
-    outline: none;
-    transition: 0.3s;
-  }
-  input:focus {
-    border-color: #ff8fa3;
-    box-shadow: 0 0 10px #ff8fa3;
-  }
+  p { color: #ddd; }
 
-  button {
-    margin: 6px;
-    padding: 10px 18px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 15px;
-    font-weight: 600;
-    background: linear-gradient(45deg, #ff8fa3, #ff5d8f);
-    color: #fff;
-    box-shadow: 0 4px 12px rgba(255, 94, 158, 0.3);
-    transition: all 0.3s ease;
-  }
-
-  button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(255, 94, 158, 0.5);
-  }
-
+  /* ===== Video Section ===== */
   .video-wrap {
     position: relative;
     width: 100%;
-    background: rgba(0, 0, 0, 0.85);
-    border: 2px solid rgba(255, 255, 255, 0.15);
-    border-radius: 16px;
+    background: rgba(0,0,0,0.5);
+    border: 2px solid rgba(255,192,203,0.3);
+    border-radius: 12px;
     overflow: hidden;
-    margin-top: 18px;
-    box-shadow: 0 0 30px rgba(255, 105, 180, 0.15);
-    transition: 0.4s;
+    margin-top: 15px;
+    box-shadow: 0 0 20px rgba(255,105,180,0.3);
   }
 
   video {
     width: 100%;
     height: auto;
-    border-radius: 10px;
     background: #000;
+  }
+
+  button, input {
+    margin: 5px; padding: 8px 14px;
+    border-radius: 6px; border: none;
+    cursor: pointer;
+    background: #243b72;
+    color: #fff;
+    font-size: 15px;
+    box-shadow: 0 0 10px rgba(255,105,180,0.4);
+    transition: all 0.3s;
+  }
+
+  button:hover {
+    background: #355ec9;
+    box-shadow: 0 0 15px rgba(255,105,180,0.7);
+  }
+
+  input {
+    background: #1a1a40;
+    color: #fff;
+    border: 1px solid #555;
   }
 
   #fullscreenBtn {
     position: absolute;
     bottom: 10px;
     right: 10px;
-    background: rgba(255, 255, 255, 0.25);
-    color: #fff;
-    font-size: 22px;
-    border-radius: 50%;
-    width: 42px;
-    height: 42px;
-    border: none;
-    cursor: pointer;
-    transition: 0.3s;
+    background: rgba(255,255,255,0.2);
+    color: white;
+    font-size: 20px;
+    border-radius: 6px;
+    padding: 6px 10px;
   }
 
   #fullscreenBtn:hover {
-    background: rgba(255, 255, 255, 0.5);
+    background: rgba(255,255,255,0.4);
   }
 
-  #status {
-    margin-top: 20px;
-    color: #aaa;
-    font-size: 14px;
-    letter-spacing: 0.3px;
+  /* ===== Floating Hearts ===== */
+  .heart {
+    position: fixed;
+    bottom: -20px;
+    color: #ff80bf;
+    font-size: 20px;
+    animation: floatHearts 6s linear infinite;
+    opacity: 0.7;
+    z-index: 1;
   }
 
-  /* Animations */
-  @keyframes fadeInDown {
-    from { opacity: 0; transform: translateY(-20px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  /* Floating glow effect */
-  .glow {
-    position: absolute;
-    top: -100px;
-    left: -100px;
-    width: 300px;
-    height: 300px;
-    background: radial-gradient(circle, rgba(255, 94, 158, 0.4), transparent 70%);
-    filter: blur(50px);
-    animation: float 8s infinite alternate ease-in-out;
-    z-index: -1;
-  }
-
-  .glow:nth-child(2) {
-    top: auto;
-    bottom: -100px;
-    right: -100px;
-    left: auto;
-    background: radial-gradient(circle, rgba(147, 51, 234, 0.4), transparent 70%);
-    animation-delay: 2s;
-  }
-
-  @keyframes float {
-    from { transform: translate(0, 0); }
-    to { transform: translate(20px, 40px); }
+  @keyframes floatHearts {
+    0% { transform: translateY(0) translateX(0) scale(1); opacity: 0.9; }
+    50% { opacity: 1; }
+    100% { transform: translateY(-120vh) translateX(calc(-50px + 100vw * var(--x))) scale(0.8); opacity: 0; }
   }
 </style>
 </head>
 <body>
-<div class="glow"></div>
-<div class="glow"></div>
 
+<!-- ❤️ Floating Hearts -->
+<script>
+  setInterval(() => {
+    const heart = document.createElement('div');
+    heart.className = 'heart';
+    heart.textContent = '❤';
+    heart.style.left = Math.random() * 100 + 'vw';
+    heart.style.animationDuration = (4 + Math.random() * 3) + 's';
+    heart.style.setProperty('--x', Math.random());
+    document.body.appendChild(heart);
+    setTimeout(() => heart.remove(), 7000);
+  }, 500);
+</script>
+
+<!-- 🌸 Main App -->
 <main>
-  <h1>💞 Watch Together</h1>
-  <p>Enjoy your favorite movies side by side — with voice, screen, and heart. 💫</p>
+  <h1>🎥 Watch Together</h1>
+  <p>Share your screen + voice and enjoy together 💬</p>
 
-  <input id="roomIdInput" placeholder="Enter Room ID..." />
+  <input id="roomIdInput" placeholder="Enter room ID..." />
   <div>
-    <button id="createBtn">🎬 Create & Start</button>
-    <button id="joinBtn">❤️ Join Room</button>
-    <button id="hangupBtn">🔚 Hang Up</button>
+    <button id="createBtn">Create & Start</button>
+    <button id="joinBtn">Join Room</button>
+    <button id="hangupBtn">Hang Up</button>
   </div>
 
-  <h3>🎥 Shared Screen</h3>
+  <h3>Remote Stream (movie + voice)</h3>
   <div class="video-wrap">
     <video id="remoteVideo" autoplay playsinline></video>
     <button id="fullscreenBtn">⛶</button>
   </div>
 
-  <h3>🌸 Your Preview</h3>
+  <h3>Your Preview</h3>
   <div class="video-wrap">
     <video id="localVideo" autoplay muted playsinline></video>
   </div>
