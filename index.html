@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Screen Share WebRTC with Firebase</title>
+<title>Watch Together 🎬</title>
 <style>
   body { font-family: Arial, sans-serif; margin: 20px; background: #f7f7fb; color: #111; }
   main { max-width: 900px; margin: 0 auto; }
-  .video-wrap { position: relative; width: 100%; max-height: 400px; background: #000; overflow: hidden; }
+  .video-wrap { position: relative; width: 100%; max-height: 400px; background: #000; overflow: hidden; border-radius: 8px; }
   video { width: 100%; height: auto; background: #000; }
   .row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
   button, input { padding: 8px 12px; border-radius: 8px; border: 1px solid #ccc; background: white; }
@@ -17,8 +17,8 @@
 </head>
 <body>
   <main>
-    <h1>Screen Share WebRTC with Firebase</h1>
-    <p class="info">Share your screen (and optionally mic) to another device.</p>
+    <h1>🎥 Watch Together</h1>
+    <p class="info">Create a room and share your movie window or video file with your partner ❤️</p>
 
     <label>Room ID: <input id="roomIdInput" placeholder="room123" /></label>
 
@@ -28,13 +28,15 @@
       <button id="hangupBtn">Hang Up</button>
     </div>
 
-    <h3>Remote Stream</h3>
+    <h3>Remote Stream (from other)</h3>
     <div class="video-wrap">
-       <video id="localPreview" autoplay muted playsinline></video>
+      <video id="remoteVideo" autoplay playsinline></video>
     </div>
 
-    <h3>Your Preview (Local)</h3>
-    <video id="localPreview" autoplay muted playsinline></video>
+    <h3>Your Preview (local)</h3>
+    <div class="video-wrap">
+      <video id="localPreview" autoplay muted playsinline></video>
+    </div>
 
     <div class="info" id="status">Status: idle</div>
 
@@ -46,5 +48,3 @@
   </main>
 </body>
 </html>
-
-
