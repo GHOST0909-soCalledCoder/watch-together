@@ -70,7 +70,7 @@ function makeConnection() {
         const params = sender.getParameters();
         if (!params.encodings) params.encodings = [{}];
         params.encodings[0].maxBitrate = 5_000_000; // 5 Mbps
-        params.encodings[0].maxFramerate = 120;
+        params.encodings[0].maxFramerate = 90;
         sender.setParameters(params).catch(console.warn);
       }
     });
@@ -98,7 +98,7 @@ async function createRoom() {
       video: {
         width: { ideal: 1920 },
         height: { ideal: 1080 },
-        frameRate: { ideal: 120, max: 120 }
+        frameRate: { ideal: 90, max: 90 }
       },
       audio: true
     });
@@ -202,6 +202,7 @@ async function hangUp() {
   localVideo.srcObject = null;
   log("Idle");
 }
+
 
 
 
