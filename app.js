@@ -1,4 +1,4 @@
-// Firebase config - replace with your own config
+// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyBVBzK1RuqYKOznJ6hgv_ouoJlm6qUrSqA",
   authDomain: "watch-together-5479f.firebaseapp.com",
@@ -14,11 +14,7 @@ const db = firebase.database();
 
 const servers = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
 
-let pc;
-let localStream;
-let roomRef;
-let roomId;
-let isCreator = false;
+let pc, localStream, roomRef, roomId, isCreator = false;
 
 const remoteVideo = document.getElementById("remoteVideo");
 const localPreview = document.getElementById("localPreview");
@@ -29,7 +25,6 @@ function logStatus(msg) {
   statusDiv.textContent = "Status: " + msg;
 }
 
-// Button event listeners
 document.getElementById("createBtn").onclick = createRoom;
 document.getElementById("joinBtn").onclick = joinRoom;
 document.getElementById("hangupBtn").onclick = hangUp;
@@ -45,14 +40,12 @@ function makePeerConnection() {
   };
 
   pc.ontrack = e => {
-    console.log("Remote track received", e.streams);
     remoteVideo.srcObject = e.streams[0];
-    logStatus("Remote stream available");
+    logStatus("✅ Remote stream received!");
   };
 
   pc.oniceconnectionstatechange = () => {
     console.log("ICE state:", pc.iceConnectionState);
-    logStatus("ICE state: " + pc.iceConnectionState);
   };
 
   return pc;
@@ -60,107 +53,77 @@ function makePeerConnection() {
 
 async function createRoom() {
   isCreator = true;
-  roomId = document.getElementById("roomIdInput").value.trim();
-  if (!roomId) {
-    roomId = Math.random().toString(36).substring(2, 8);
-    alert("No Room ID given, generated: " + roomId);
-    document.getElementById("roomIdInput").value = roomId;
-  }
+  roomId = document.getElementById("roomIdInput").value.trim() || Math.random().toString(36).substring(2, 8);
   roomRef = db.ref("rooms/" + roomId);
   logStatus("Creating room: " + roomId);
 
+  // Try to capture screen
   try {
     localStream = await navigator.mediaDevices.getDisplayMedia({
       video: { width: 1280, height: 720, frameRate: 15 },
-      audio: true // capture audio from screen if available
+      audio: true
     });
   } catch (err) {
-    alert("Screen capture failed or not supported.");
+    alert("⚠️ Screen capture failed. Instead, select a video file to share.");
     return;
   }
 
   localPreview.srcObject = localStream;
 
   pc = makePeerConnection();
-
   localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
 
   const offer = await pc.createOffer();
   await pc.setLocalDescription(offer);
-
   await roomRef.set({ offer: { type: offer.type, sdp: offer.sdp } });
 
   roomRef.on("value", async snapshot => {
     const data = snapshot.val();
     if (!pc.currentRemoteDescription && data && data.answer) {
       await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
-      logStatus("Answer received");
+      logStatus("Answer received, connected!");
     }
   });
 
   roomRef.child("calleeCandidates").on("child_added", snapshot => {
     const candidate = snapshot.val();
-    if (candidate) {
-      pc.addIceCandidate(new RTCIceCandidate(candidate)).catch(console.error);
-    }
+    if (candidate) pc.addIceCandidate(new RTCIceCandidate(candidate)).catch(console.error);
   });
 
   alert("Room created: " + roomId);
-  logStatus("Waiting for participants...");
 }
 
 async function joinRoom() {
   isCreator = false;
   roomId = document.getElementById("roomIdInput").value.trim();
-  if (!roomId) {
-    alert("Enter a Room ID");
-    return;
-  }
-  roomRef = db.ref("rooms/" + roomId);
-  logStatus("Joining room: " + roomId);
+  if (!roomId) return alert("Enter Room ID!");
 
+  roomRef = db.ref("rooms/" + roomId);
   pc = makePeerConnection();
 
   roomRef.child("callerCandidates").on("child_added", snapshot => {
     const candidate = snapshot.val();
-    if (candidate) {
-      pc.addIceCandidate(new RTCIceCandidate(candidate)).catch(console.error);
-    }
+    if (candidate) pc.addIceCandidate(new RTCIceCandidate(candidate)).catch(console.error);
   });
 
   const snap = await roomRef.once("value");
   const data = snap.val();
-
-  if (!data || !data.offer) {
-    alert("Room does not exist or no offer yet.");
-    return;
-  }
+  if (!data || !data.offer) return alert("Room not found!");
 
   await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
   const answer = await pc.createAnswer();
   await pc.setLocalDescription(answer);
-
   await roomRef.update({ answer: { type: answer.type, sdp: answer.sdp } });
 
-  logStatus("Connected! Waiting for remote stream...");
+  logStatus("Joined room successfully, waiting for remote stream...");
 }
 
 async function hangUp() {
-  logStatus("Hanging up...");
-  if (localStream) {
-    localStream.getTracks().forEach(track => track.stop());
-    localStream = null;
-  }
-  if (pc) {
-    pc.close();
-    pc = null;
-  }
-  if (roomRef && isCreator) {
-    await roomRef.remove();
-  }
+  if (localStream) localStream.getTracks().forEach(t => t.stop());
+  if (pc) pc.close();
   remoteVideo.srcObject = null;
   localPreview.srcObject = null;
-  logStatus("Idle");
+  logStatus("Disconnected.");
+  if (isCreator && roomRef) await roomRef.remove();
 }
-
 
