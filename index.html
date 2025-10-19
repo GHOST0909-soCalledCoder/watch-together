@@ -5,196 +5,187 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>🎬 Watch Together</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap');
+
   body {
-    font-family: "Poppins", sans-serif;
-    background: radial-gradient(circle at top, #0f172a, #000);
-    color: #eee;
+    font-family: 'Poppins', sans-serif;
+    background: radial-gradient(circle at top, #ffb6c1 0%, #1a001f 80%);
+    color: #fff;
     margin: 0;
     padding: 0;
     overflow-x: hidden;
-  }
-
-  /* Background glow animation */
-  .bg-glow {
-    position: fixed;
-    width: 400px;
-    height: 400px;
-    background: radial-gradient(circle, rgba(59,130,246,0.35), transparent 70%);
-    filter: blur(80px);
-    border-radius: 50%;
-    animation: floatGlow 12s infinite alternate ease-in-out;
-    z-index: -1;
-  }
-  .bg-glow:nth-child(1) { top: -100px; left: -100px; }
-  .bg-glow:nth-child(2) { bottom: -100px; right: -100px; animation-delay: 3s; }
-
-  @keyframes floatGlow {
-    0% { transform: translate(0, 0) scale(1); opacity: 0.7; }
-    100% { transform: translate(40px, 30px) scale(1.2); opacity: 1; }
+    height: 100vh;
   }
 
   main {
+    position: relative;
+    z-index: 5;
     max-width: 900px;
     margin: auto;
     text-align: center;
-    padding: 40px 20px;
-    animation: fadeIn 1s ease-in;
-  }
-
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
+    padding: 30px 20px;
   }
 
   h1 {
-    font-size: 2.3rem;
-    background: linear-gradient(90deg, #60a5fa, #38bdf8, #818cf8);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    animation: shimmer 4s linear infinite;
-  }
-
-  @keyframes shimmer {
-    0% { background-position: 0%; }
-    100% { background-position: 200%; }
+    font-size: 2.5em;
+    color: #ffdee9;
+    text-shadow: 0 0 15px rgba(255,192,203,0.9);
+    animation: glowPulse 3s infinite alternate;
   }
 
   p {
-    color: #a3a3a3;
-    margin-bottom: 20px;
-    font-weight: 300;
-  }
-
-  input {
-    background: rgba(255, 255, 255, 0.08);
-    color: #fff;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 10px;
-    padding: 10px 15px;
-    font-size: 15px;
-    outline: none;
-    transition: 0.3s;
-  }
-  input:focus {
-    border-color: #38bdf8;
-    box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
-  }
-
-  button {
-    margin: 6px;
-    padding: 10px 18px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 15px;
-    font-weight: 600;
-    color: #fff;
-    background: linear-gradient(45deg, #2563eb, #0ea5e9);
-    transition: all 0.3s ease;
-    box-shadow: 0 3px 15px rgba(14,165,233,0.3);
-  }
-
-  button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 20px rgba(37,99,235,0.5);
-  }
-
-  button:active {
-    transform: scale(0.96);
-  }
-
-  h3 {
-    margin-top: 25px;
-    color: #93c5fd;
-    letter-spacing: 0.5px;
-    text-shadow: 0 0 10px rgba(147,197,253,0.3);
+    color: #ffdff3;
+    font-size: 1.1em;
   }
 
   .video-wrap {
     position: relative;
     width: 100%;
-    background: #000;
-    border: 1px solid rgba(255,255,255,0.15);
-    border-radius: 14px;
+    background: rgba(0,0,0,0.6);
+    border-radius: 15px;
     overflow: hidden;
-    margin-top: 10px;
-    box-shadow: 0 0 30px rgba(56, 189, 248, 0.15);
-    animation: pulseBorder 6s infinite alternate ease-in-out;
-  }
-
-  @keyframes pulseBorder {
-    0% { box-shadow: 0 0 20px rgba(56, 189, 248, 0.2); }
-    100% { box-shadow: 0 0 40px rgba(56, 189, 248, 0.5); }
+    margin-top: 15px;
+    box-shadow: 0 0 20px rgba(255, 182, 193, 0.4);
   }
 
   video {
     width: 100%;
     height: auto;
-    background: #000;
+    display: block;
+    border-radius: 10px;
+  }
+
+  button, input {
+    margin: 5px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    background: linear-gradient(135deg, #ff80bf, #ff4fa3);
+    color: #fff;
+    font-size: 15px;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 10px rgba(255, 105, 180, 0.5);
+  }
+
+  button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(255, 105, 180, 0.8);
+  }
+
+  input {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 182, 193, 0.5);
+    color: #fff;
   }
 
   #fullscreenBtn {
     position: absolute;
     bottom: 10px;
     right: 10px;
-    background: rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.25);
     color: white;
     font-size: 20px;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    border: none;
-    cursor: pointer;
-    transition: 0.3s;
-    backdrop-filter: blur(5px);
+    border-radius: 6px;
+    padding: 6px 10px;
+    transition: all 0.3s ease;
   }
 
   #fullscreenBtn:hover {
-    background: rgba(255,255,255,0.4);
+    background: rgba(255,255,255,0.5);
   }
 
   #status {
-    margin-top: 18px;
-    color: #94a3b8;
-    font-size: 14px;
+    margin-top: 10px;
+    font-style: italic;
+    color: #ffe1ef;
+  }
+
+  @keyframes glowPulse {
+    from { text-shadow: 0 0 5px #ff91af, 0 0 15px #ff4fa3; }
+    to { text-shadow: 0 0 20px #ffb6c1, 0 0 40px #ff4fa3; }
+  }
+
+  /* Floating hearts */
+  .heart {
+    position: fixed;
+    bottom: -10px;
+    color: #ff8ab4;
+    animation: floatHeart 6s ease-in infinite;
+    font-size: 20px;
+    opacity: 0.7;
+    z-index: 1;
+  }
+
+  @keyframes floatHeart {
+    0% { transform: translateY(0) scale(1); opacity: 1; }
+    100% { transform: translateY(-110vh) scale(1.6); opacity: 0; }
+  }
+
+  /* Dragon */
+  .dragon {
+    position: fixed;
+    top: 30%;
+    left: -200px;
+    width: 180px;
+    z-index: 0;
+    animation: flyDragon 20s linear infinite;
+  }
+
+  @keyframes flyDragon {
+    0% { transform: translateX(-200px) scale(1); }
+    50% { transform: translateX(calc(100vw + 200px)) scale(1.1); }
+    100% { transform: translateX(-200px) scale(1); }
   }
 </style>
 </head>
+
 <body>
-<div class="bg-glow"></div>
-<div class="bg-glow"></div>
-
-<main>
-  <h1>🎥 Watch Together</h1>
-  <p>Share your screen and voice — watch, study, or chill together with ease.</p>
-
-  <input id="roomIdInput" placeholder="Enter room ID..." />
-  <div>
-    <button id="createBtn">Create & Start</button>
-    <button id="joinBtn">Join Room</button>
-    <button id="hangupBtn">Hang Up</button>
+  <!-- Animated background dragon -->
+  <div class="dragon">
+    🐉💐
   </div>
 
-  <h3>Remote Stream (Shared Screen)</h3>
-  <div class="video-wrap">
-    <video id="remoteVideo" autoplay playsinline></video>
-    <button id="fullscreenBtn">⛶</button>
-  </div>
+  <!-- Floating hearts (auto generated by JS) -->
+  <script>
+    for (let i = 0; i < 20; i++) {
+      const heart = document.createElement("div");
+      heart.className = "heart";
+      heart.style.left = Math.random() * 100 + "vw";
+      heart.style.animationDelay = Math.random() * 6 + "s";
+      heart.textContent = "❤";
+      document.body.appendChild(heart);
+    }
+  </script>
 
-  <h3>Your Preview</h3>
-  <div class="video-wrap">
-    <video id="localVideo" autoplay muted playsinline></video>
-  </div>
+  <main>
+    <h1>🎥 Watch Together</h1>
+    <p>Share your screen, watch movies, and talk in a dreamy vibe 💞</p>
 
-  <p id="status">Status: idle</p>
+    <input id="roomIdInput" placeholder="Enter room ID..." />
+    <div>
+      <button id="createBtn">Create & Start</button>
+      <button id="joinBtn">Join Room</button>
+      <button id="hangupBtn">Hang Up</button>
+    </div>
 
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-  <script src="app.js"></script>
-</main>
+    <h3>Remote Stream (movie + voice)</h3>
+    <div class="video-wrap">
+      <video id="remoteVideo" autoplay playsinline></video>
+      <button id="fullscreenBtn">⛶</button>
+    </div>
+
+    <h3>Your Preview</h3>
+    <div class="video-wrap">
+      <video id="localVideo" autoplay muted playsinline></video>
+    </div>
+
+    <p id="status">Status: idle</p>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+    <script src="app.js"></script>
+  </main>
 </body>
 </html>
-
