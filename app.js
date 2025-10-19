@@ -1,4 +1,4 @@
-// Firebase config
+// 🔥 Firebase Config (keep yours if already set)
 const firebaseConfig = {
   apiKey: "AIzaSyBVBzK1RuqYKOznJ6hgv_ouoJlm6qUrSqA",
   authDomain: "watch-together-5479f.firebaseapp.com",
@@ -8,149 +8,161 @@ const firebaseConfig = {
   messagingSenderId: "343985532299",
   appId: "1:343985532299:web:9f858ec40f79c38b75538e"
 };
-
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
+// ⚙️ Setup
 const servers = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
+let pc, localStream, micStream, finalStream, roomRef, roomId, isCreator = false;
 
-let pc, localStream, micStream, mixedStream, roomRef, roomId, isCreator = false;
-
+const localVideo = document.getElementById("localVideo");
 const remoteVideo = document.getElementById("remoteVideo");
-const localPreview = document.getElementById("localPreview");
-const statusDiv = document.getElementById("status");
+const statusEl = document.getElementById("status");
 
-function logStatus(msg) {
-  console.log("[STATUS]", msg);
-  statusDiv.textContent = "Status: " + msg;
+// 🪄 Helpers
+function log(msg) {
+  console.log(msg);
+  statusEl.textContent = "Status: " + msg;
 }
 
+// Fullscreen Button
+document.getElementById("fullscreenBtn").onclick = async () => {
+  if (document.fullscreenElement) document.exitFullscreen();
+  else await remoteVideo.requestFullscreen().catch(() => {});
+};
+
+// Buttons
 document.getElementById("createBtn").onclick = createRoom;
 document.getElementById("joinBtn").onclick = joinRoom;
 document.getElementById("hangupBtn").onclick = hangUp;
 
-// Fullscreen toggle
-document.getElementById("fullscreenBtn").onclick = () => {
-  if (remoteVideo.requestFullscreen) remoteVideo.requestFullscreen();
-  else if (remoteVideo.webkitRequestFullscreen) remoteVideo.webkitRequestFullscreen();
-};
-
-function makePeerConnection() {
+// 🔗 Peer connection setup
+function makeConnection() {
   pc = new RTCPeerConnection(servers);
 
   pc.onicecandidate = e => {
-    if (e.candidate && roomRef) {
-      const collection = isCreator ? "callerCandidates" : "calleeCandidates";
-      roomRef.child(collection).push(e.candidate.toJSON());
+    if (e.candidate) {
+      const path = isCreator ? "callerCandidates" : "calleeCandidates";
+      roomRef.child(path).push(e.candidate.toJSON());
     }
   };
 
   pc.ontrack = e => {
-    console.log("Remote stream received", e.streams);
+    log("🎥 Remote stream added");
     remoteVideo.srcObject = e.streams[0];
-    logStatus("✅ Remote stream connected!");
   };
 
   return pc;
 }
 
+// 🎬 Create room (creator shares screen + mic)
 async function createRoom() {
   isCreator = true;
   roomId = document.getElementById("roomIdInput").value.trim() || Math.random().toString(36).substring(2, 8);
   roomRef = db.ref("rooms/" + roomId);
-  logStatus("Creating room: " + roomId);
+
+  log("Creating room " + roomId);
 
   try {
-    // 1️⃣ Screen or window share
-    const screenStream = await navigator.mediaDevices.getDisplayMedia({
-      video: { width: 1280, height: 720, frameRate: 15 },
-      audio: true
-    });
+    // Screen share with audio
+    const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
 
-    // 2️⃣ Microphone stream
+    // Mic audio (for talking)
     micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-    // 3️⃣ Merge both into one stream (video + mic audio)
-    mixedStream = new MediaStream([
+    // Merge both audio sources
+    const audioContext = new AudioContext();
+    const destination = audioContext.createMediaStreamDestination();
+
+    if (screenStream.getAudioTracks().length > 0) {
+      const screenAudio = audioContext.createMediaStreamSource(screenStream);
+      screenAudio.connect(destination);
+    }
+    if (micStream.getAudioTracks().length > 0) {
+      const micAudio = audioContext.createMediaStreamSource(micStream);
+      micAudio.connect(destination);
+    }
+
+    // Combine video + merged audio
+    finalStream = new MediaStream([
       ...screenStream.getVideoTracks(),
-      ...micStream.getAudioTracks()
+      ...destination.stream.getAudioTracks()
     ]);
 
-    localStream = mixedStream;
-    localPreview.srcObject = localStream;
+    localVideo.srcObject = finalStream;
   } catch (err) {
-    alert("Screen or mic permission denied.");
+    alert("Error: " + err.message);
     return;
   }
 
-  pc = makePeerConnection();
-  localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+  pc = makeConnection();
+
+  finalStream.getTracks().forEach(t => pc.addTrack(t, finalStream));
 
   const offer = await pc.createOffer();
   await pc.setLocalDescription(offer);
   await roomRef.set({ offer: { type: offer.type, sdp: offer.sdp } });
 
+  roomRef.child("calleeCandidates").on("child_added", s => {
+    pc.addIceCandidate(new RTCIceCandidate(s.val()));
+  });
+
   roomRef.on("value", async snap => {
     const data = snap.val();
-    if (!pc.currentRemoteDescription && data && data.answer) {
+    if (data && data.answer && !pc.currentRemoteDescription) {
       await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
-      logStatus("Answer received, connected!");
+      log("Connected!");
     }
   });
 
-  roomRef.child("calleeCandidates").on("child_added", s => {
-    const cand = s.val();
-    if (cand) pc.addIceCandidate(new RTCIceCandidate(cand)).catch(console.error);
-  });
-
   alert("Room created: " + roomId);
-  logStatus("Waiting for partner to join...");
+  log("Waiting for partner...");
 }
 
+// 🎧 Join room (viewer + mic for voice chat)
 async function joinRoom() {
   isCreator = false;
   roomId = document.getElementById("roomIdInput").value.trim();
-  if (!roomId) return alert("Enter Room ID!");
+  if (!roomId) return alert("Enter a room ID first!");
 
   roomRef = db.ref("rooms/" + roomId);
-  pc = makePeerConnection();
-
-  roomRef.child("callerCandidates").on("child_added", s => {
-    const cand = s.val();
-    if (cand) pc.addIceCandidate(new RTCIceCandidate(cand)).catch(console.error);
-  });
-
-  const snap = await roomRef.once("value");
-  const data = snap.val();
+  const snapshot = await roomRef.once("value");
+  const data = snapshot.val();
   if (!data || !data.offer) return alert("Room not found!");
+
+  pc = makeConnection();
 
   await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
 
-  // 🎙️ Joiner adds their mic (so both can talk)
+  // Add mic for voice chat
   try {
     micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
     micStream.getTracks().forEach(track => pc.addTrack(track, micStream));
-  } catch (e) {
-    console.warn("Mic permission denied on joiner.");
+  } catch (err) {
+    console.warn("Mic permission denied: ", err);
   }
 
   const answer = await pc.createAnswer();
   await pc.setLocalDescription(answer);
   await roomRef.update({ answer: { type: answer.type, sdp: answer.sdp } });
 
-  logStatus("Joined room. Waiting for remote stream...");
+  roomRef.child("callerCandidates").on("child_added", s => {
+    pc.addIceCandidate(new RTCIceCandidate(s.val()));
+  });
+
+  log("Joined room " + roomId);
 }
 
+// 🚫 Hang up
 async function hangUp() {
-  logStatus("Hanging up...");
+  log("Hanging up...");
   if (localStream) localStream.getTracks().forEach(t => t.stop());
   if (micStream) micStream.getTracks().forEach(t => t.stop());
+  if (finalStream) finalStream.getTracks().forEach(t => t.stop());
   if (pc) pc.close();
-
-  remoteVideo.srcObject = null;
-  localPreview.srcObject = null;
   if (isCreator && roomRef) await roomRef.remove();
-
-  logStatus("Idle");
+  localVideo.srcObject = null;
+  remoteVideo.srcObject = null;
+  log("Idle");
 }
 
