@@ -24,12 +24,19 @@ function log(msg) {
   console.log(msg);
   statusEl.textContent = "Status: " + msg;
 }
-// --------------------
 
+// --------------------
 // Fullscreen
 document.getElementById("fullscreenBtn").onclick = async () => {
-  if (document.fullscreenElement) document.exitFullscreen();
-  else await remoteVideo.requestFullscreen().catch(() => {});
+  try {
+    if (document.fullscreenElement) {
+      await document.exitFullscreen();
+    } else {
+      await remoteVideo.requestFullscreen();
+    }
+  } catch (err) {
+    console.warn("Fullscreen error:", err);
+  }
 };
 
 // --------------------
@@ -55,6 +62,20 @@ function makeConnection() {
     remoteVideo.srcObject = e.streams[0];
   };
 
+  // 🔥 Boost bitrate whenever negotiation occurs
+  pc.onnegotiationneeded = async () => {
+    const senders = pc.getSenders();
+    senders.forEach(sender => {
+      if (sender.track && sender.track.kind === "video") {
+        const params = sender.getParameters();
+        if (!params.encodings) params.encodings = [{}];
+        params.encodings[0].maxBitrate = 5_000_000; // 5 Mbps
+        params.encodings[0].maxFramerate = 60;
+        sender.setParameters(params).catch(console.warn);
+      }
+    });
+  };
+
   return pc;
 }
 
@@ -72,8 +93,15 @@ async function createRoom() {
     micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
     log("🎤 Mic access granted");
 
-    // Then ask for screen (in same user gesture)
-    screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+    // Then ask for screen (in same gesture)
+    screenStream = await navigator.mediaDevices.getDisplayMedia({
+      video: {
+        width: { ideal: 1920 },
+        height: { ideal: 1080 },
+        frameRate: { ideal: 30, max: 60 }
+      },
+      audio: true
+    });
     log("🖥️ Screen share granted");
   } catch (err) {
     alert("Screen or mic permission denied.");
