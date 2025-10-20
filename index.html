@@ -109,6 +109,31 @@
     100% { transform: translateY(-110vh) scale(1.5); opacity: 0; }
   }
 
+  /* Sparkles */
+  .sparkle {
+    position: fixed;
+    width: 6px; height: 6px;
+    background: radial-gradient(circle, #ffb7e2 0%, transparent 70%);
+    border-radius: 50%;
+    animation: sparkleMove 8s linear infinite;
+  }
+  @keyframes sparkleMove {
+    from { transform: translateY(100vh) translateX(0); opacity: 1; }
+    to { transform: translateY(-10vh) translateX(20vw); opacity: 0; }
+  }
+
+  /* Reaction */
+  .reaction {
+    position: absolute;
+    font-size: 26px;
+    animation: floatUpReaction 1.5s ease-out forwards;
+    pointer-events: none;
+  }
+  @keyframes floatUpReaction {
+    from { transform: translateY(0); opacity: 1; }
+    to { transform: translateY(-80px); opacity: 0; }
+  }
+
   /* Reaction Buttons */
   #reactionBar {
     position: fixed;
@@ -133,84 +158,54 @@
     transform: scale(1.2);
   }
 
-  /* Chat Box */
-  #chatBox {
-    position: fixed;
-    right: 25px;
-    top: 80px;
-    width: 250px;
-    height: 400px;
-    background: rgba(0,0,0,0.4);
-    border: 1px solid rgba(255,255,255,0.2);
-    border-radius: 12px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    overflow: hidden;
-    backdrop-filter: blur(10px);
-    box-shadow: 0 0 20px rgba(255,105,180,0.3);
-    z-index: 10;
-  }
-  #chatMessages {
-    flex: 1;
-    overflow-y: auto;
-    padding: 10px;
-    font-size: 14px;
-  }
-  .chatMsg {
-    margin: 5px 0;
-    padding: 6px 10px;
-    border-radius: 10px;
-    max-width: 80%;
-    animation: fadeInMsg 0.3s ease;
-    word-wrap: break-word;
-  }
-  .me {
-    background: #ff80bf;
-    align-self: flex-end;
-    margin-left: auto;
-  }
-  .other {
-    background: #355ec9;
-    align-self: flex-start;
-    margin-right: auto;
-  }
-  @keyframes fadeInMsg {
-    from { opacity: 0; transform: translateY(5px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  #chatInputArea {
-    display: flex;
-    border-top: 1px solid rgba(255,255,255,0.2);
-  }
-  #chatInput {
-    flex: 1;
-    padding: 8px;
-    border: none;
-    outline: none;
+  /* Chat Bubble */
+  .chat-bubble {
+    position: absolute;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255,255,255,0.2);
     color: #fff;
-    background: rgba(255,255,255,0.1);
+    padding: 8px 14px;
+    border-radius: 20px;
+    font-size: 14px;
+    backdrop-filter: blur(6px);
+    opacity: 0;
+    animation: showBubble 3s ease forwards;
   }
-  #sendBtn {
-    background: #ff80bf;
-    border: none;
-    color: white;
-    font-weight: bold;
-    padding: 8px 12px;
-    cursor: pointer;
-    transition: 0.2s;
+  @keyframes showBubble {
+    0% { opacity: 0; transform: translateY(20px) scale(0.9); }
+    20% { opacity: 1; transform: translateY(0) scale(1); }
+    80% { opacity: 1; }
+    100% { opacity: 0; transform: translateY(-20px) scale(0.95); }
   }
-  #sendBtn:hover { background: #ff4fa3; }
+
+  /* Cinema Curtain Transition */
+  #curtain {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: linear-gradient(to right, #111, #2b0055, #111);
+    z-index: 999;
+    transform-origin: center;
+    animation: curtainOpen 2.5s ease-out forwards;
+  }
+  @keyframes curtainOpen {
+    0% { transform: scaleX(1); opacity: 1; }
+    100% { transform: scaleX(0); opacity: 0; }
+  }
 
   #status { margin-top: 10px; font-size: 14px; color: #aaa; }
 </style>
 </head>
 
 <body>
+<div id="curtain"></div>
+
 <main>
   <h1>🎬 Watch Together</h1>
   <div id="watchStatus" style="display:none;">✨ Now Watching Together... ✨</div>
-  <p>Share your screen + voice and chat while watching together.</p>
+  <p>Share your screen + voice and enjoy a fun movie night together.</p>
 
   <input id="roomIdInput" placeholder="Enter room ID..." />
   <div>
@@ -233,76 +228,74 @@
   <p id="status">Status: idle</p>
 </main>
 
-<!-- Reaction Buttons -->
+<!-- Emoji Reaction Bar -->
 <div id="reactionBar">
+  <button>🎬</button>
   <button>😂</button>
   <button>💗</button>
   <button>👏</button>
   <button>🔥</button>
 </div>
 
-<!-- Chat Box -->
-<div id="chatBox">
-  <div id="chatMessages"></div>
-  <div id="chatInputArea">
-    <input id="chatInput" placeholder="Type a message..." />
-    <button id="sendBtn">➤</button>
-  </div>
-</div>
-
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 <script src="app.js"></script>
 
 <script>
-  // ❤️ Floating hearts
-  setInterval(() => {
-    const heart = document.createElement('div');
-    heart.className = 'heart';
-    heart.textContent = '💖';
-    heart.style.left = Math.random() * 100 + 'vw';
-    heart.style.fontSize = Math.random() * 20 + 15 + 'px';
+  // Floating Hearts
+  function createHeart() {
+    const heart = document.createElement("div");
+    heart.classList.add("heart");
+    heart.textContent = "💗";
+    heart.style.left = Math.random() * 100 + "vw";
+    heart.style.fontSize = Math.random() * 20 + 15 + "px";
+    heart.style.animationDuration = 4 + Math.random() * 3 + "s";
     document.body.appendChild(heart);
     setTimeout(() => heart.remove(), 7000);
-  }, 900);
-
-  // Firebase Chat Setup
-  const db = firebase.database();
-  const chatBox = document.getElementById('chatMessages');
-  const sendBtn = document.getElementById('sendBtn');
-  const chatInput = document.getElementById('chatInput');
-  let currentRoomId = '';
-
-  function appendMsg(text, type) {
-    const msg = document.createElement('div');
-    msg.className = 'chatMsg ' + type;
-    msg.textContent = text;
-    chatBox.appendChild(msg);
-    chatBox.scrollTop = chatBox.scrollHeight;
   }
+  setInterval(createHeart, 800);
 
-  sendBtn.onclick = () => {
-    const text = chatInput.value.trim();
-    if (!text || !currentRoomId) return;
-    db.ref('chats/' + currentRoomId).push({ text, time: Date.now() });
-    appendMsg(text, 'me');
-    chatInput.value = '';
-  };
+  // Sparkles
+  function createSparkle() {
+    const s = document.createElement("div");
+    s.classList.add("sparkle");
+    s.style.left = Math.random() * 100 + "vw";
+    s.style.animationDuration = 6 + Math.random() * 4 + "s";
+    document.body.appendChild(s);
+    setTimeout(() => s.remove(), 10000);
+  }
+  setInterval(createSparkle, 500);
 
-  // Hook into room input field so we can attach listener later
-  const roomInput = document.getElementById('roomIdInput');
-  const observer = new MutationObserver(() => {
-    const roomId = roomInput.value.trim();
-    if (roomId && roomId !== currentRoomId) {
-      currentRoomId = roomId;
-      db.ref('chats/' + roomId).on('child_added', snap => {
-        const data = snap.val();
-        if (data) appendMsg(data.text, 'other');
-      });
-    }
+  // Reaction Bar
+  document.querySelectorAll('#reactionBar button').forEach(btn => {
+    btn.addEventListener('click', e => {
+      const emoji = document.createElement('div');
+      emoji.textContent = e.target.textContent;
+      emoji.classList.add('reaction');
+      emoji.style.left = (window.innerWidth - 80) + 'px';
+      emoji.style.bottom = '80px';
+      document.body.appendChild(emoji);
+      setTimeout(() => emoji.remove(), 1500);
+    });
   });
-  observer.observe(roomInput, { attributes: true, attributeFilter: ['value'] });
+
+  // Random Chat Bubble
+  const sampleChats = [
+    "Haha that scene was epic!",
+    "Wait for it... 😆",
+    "That soundtrack tho 🎵",
+    "Did you see that?! 👀",
+    "Best moment ever 🔥"
+  ];
+  function randomChatBubble() {
+    const bubble = document.createElement('div');
+    bubble.classList.add('chat-bubble');
+    bubble.textContent = sampleChats[Math.floor(Math.random()*sampleChats.length)];
+    document.body.appendChild(bubble);
+    setTimeout(() => bubble.remove(), 3000);
+  }
+  setInterval(randomChatBubble, 9000);
 </script>
 </body>
 </html>
-
