@@ -7,12 +7,12 @@
 <style>
   body {
     font-family: "Poppins", sans-serif;
-    background: linear-gradient(135deg, #1a1a40, #002b55, #1a1a40);
+    background: linear-gradient(135deg, #0a174e, #1e2a78, #2b5cd4);
     background-size: 400% 400%;
     animation: gradientFlow 10s infinite alternate;
     color: #fff;
     margin: 0; padding: 20px;
-    overflow-x: hidden;
+    overflow: hidden;
   }
   @keyframes gradientFlow {
     0% { background-position: 0% 50%; }
@@ -39,7 +39,7 @@
     to { opacity: 1; transform: translateY(0); }
   }
 
-  p { color: #ddd; margin-bottom: 10px; }
+  p { color: #ccc; margin-bottom: 10px; }
 
   input, button {
     margin: 6px; padding: 10px 14px;
@@ -69,6 +69,7 @@
     margin-top: 10px;
     box-shadow: 0 0 20px rgba(255,128,191,0.3);
   }
+
   video { width: 100%; height: auto; background: #000; }
 
   #fullscreenBtn {
@@ -108,7 +109,7 @@
     100% { transform: translateY(-110vh) scale(1.5); opacity: 0; }
   }
 
-  /* Floating sparkles */
+  /* Sparkles */
   .sparkle {
     position: fixed;
     width: 6px; height: 6px;
@@ -121,7 +122,7 @@
     to { transform: translateY(-10vh) translateX(20vw); opacity: 0; }
   }
 
-  /* Emoji reaction */
+  /* Reaction */
   .reaction {
     position: absolute;
     font-size: 26px;
@@ -133,15 +134,78 @@
     to { transform: translateY(-80px); opacity: 0; }
   }
 
+  /* Reaction Buttons */
+  #reactionBar {
+    position: fixed;
+    bottom: 25px;
+    right: 25px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 30px;
+    padding: 8px 10px;
+    display: flex;
+    gap: 8px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 0 10px rgba(255,255,255,0.3);
+  }
+  #reactionBar button {
+    background: transparent;
+    font-size: 24px;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.2s;
+  }
+  #reactionBar button:hover {
+    transform: scale(1.2);
+  }
+
+  /* Chat Bubble */
+  .chat-bubble {
+    position: absolute;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    padding: 8px 14px;
+    border-radius: 20px;
+    font-size: 14px;
+    backdrop-filter: blur(6px);
+    opacity: 0;
+    animation: showBubble 3s ease forwards;
+  }
+  @keyframes showBubble {
+    0% { opacity: 0; transform: translateY(20px) scale(0.9); }
+    20% { opacity: 1; transform: translateY(0) scale(1); }
+    80% { opacity: 1; }
+    100% { opacity: 0; transform: translateY(-20px) scale(0.95); }
+  }
+
+  /* Cinema Curtain Transition */
+  #curtain {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: linear-gradient(to right, #111, #2b0055, #111);
+    z-index: 999;
+    transform-origin: center;
+    animation: curtainOpen 2.5s ease-out forwards;
+  }
+  @keyframes curtainOpen {
+    0% { transform: scaleX(1); opacity: 1; }
+    100% { transform: scaleX(0); opacity: 0; }
+  }
+
   #status { margin-top: 10px; font-size: 14px; color: #aaa; }
 </style>
 </head>
 
 <body>
+<div id="curtain"></div>
+
 <main>
   <h1>🎬 Watch Together</h1>
-  <div id="watchStatus" style="display:none;">✨ Now watching together... ✨</div>
-  <p>Share your screen + voice and enjoy a movie night together.</p>
+  <div id="watchStatus" style="display:none;">✨ Now Watching Together... ✨</div>
+  <p>Share your screen + voice and enjoy a fun movie night together.</p>
 
   <input id="roomIdInput" placeholder="Enter room ID..." />
   <div>
@@ -164,13 +228,22 @@
   <p id="status">Status: idle</p>
 </main>
 
+<!-- Emoji Reaction Bar -->
+<div id="reactionBar">
+  <button>🎬</button>
+  <button>😂</button>
+  <button>💗</button>
+  <button>👏</button>
+  <button>🔥</button>
+</div>
+
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 <script src="app.js"></script>
 
 <script>
-  // === Floating Hearts ===
+  // Floating Hearts
   function createHeart() {
     const heart = document.createElement("div");
     heart.classList.add("heart");
@@ -183,7 +256,7 @@
   }
   setInterval(createHeart, 800);
 
-  // === Background Sparkles ===
+  // Sparkles
   function createSparkle() {
     const s = document.createElement("div");
     s.classList.add("sparkle");
@@ -194,18 +267,35 @@
   }
   setInterval(createSparkle, 500);
 
-  // === Emoji Reactions ===
-  document.body.addEventListener("click", e => {
-    const emojiList = ['🎬','💬','😂','💗','⭐'];
-    const emoji = document.createElement('div');
-    emoji.textContent = emojiList[Math.floor(Math.random()*emojiList.length)];
-    emoji.classList.add('reaction');
-    emoji.style.left = e.clientX + 'px';
-    emoji.style.top = e.clientY + 'px';
-    document.body.appendChild(emoji);
-    setTimeout(() => emoji.remove(), 1500);
+  // Reaction Bar
+  document.querySelectorAll('#reactionBar button').forEach(btn => {
+    btn.addEventListener('click', e => {
+      const emoji = document.createElement('div');
+      emoji.textContent = e.target.textContent;
+      emoji.classList.add('reaction');
+      emoji.style.left = (window.innerWidth - 80) + 'px';
+      emoji.style.bottom = '80px';
+      document.body.appendChild(emoji);
+      setTimeout(() => emoji.remove(), 1500);
+    });
   });
+
+  // Random Chat Bubble
+  const sampleChats = [
+    "Haha that scene was epic!",
+    "Wait for it... 😆",
+    "That soundtrack tho 🎵",
+    "Did you see that?! 👀",
+    "Best moment ever 🔥"
+  ];
+  function randomChatBubble() {
+    const bubble = document.createElement('div');
+    bubble.classList.add('chat-bubble');
+    bubble.textContent = sampleChats[Math.floor(Math.random()*sampleChats.length)];
+    document.body.appendChild(bubble);
+    setTimeout(() => bubble.remove(), 3000);
+  }
+  setInterval(randomChatBubble, 9000);
 </script>
 </body>
 </html>
-
