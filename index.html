@@ -5,14 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>🎬 Watch Together</title>
 <style>
-  /* ===== Base Styling ===== */
   body {
     font-family: "Poppins", sans-serif;
-    background: linear-gradient(120deg, #0b1c3b 60%, #2a2a6f);
+    background: linear-gradient(135deg, #1a1a40, #002b55, #1a1a40);
+    background-size: 400% 400%;
+    animation: gradientFlow 10s infinite alternate;
     color: #fff;
-    margin: 0;
-    padding: 20px;
-    overflow: hidden;
+    margin: 0; padding: 20px;
+    overflow-x: hidden;
+  }
+  @keyframes gradientFlow {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 100% 50%; }
   }
 
   main {
@@ -20,116 +24,124 @@
     margin: auto;
     text-align: center;
     position: relative;
-    z-index: 10;
+    z-index: 2;
   }
 
   h1 {
     font-size: 2.5em;
-    color: #ff9fdc;
-    text-shadow: 0 0 15px #ff80bf;
-    animation: glowText 2.5s ease-in-out infinite alternate;
+    color: #ffb7e2;
+    text-shadow: 0 0 20px #ff80bf, 0 0 40px #ffb7e2;
+    animation: fadeIn 2s ease-out;
   }
 
-  @keyframes glowText {
-    from { text-shadow: 0 0 10px #ff80bf; }
-    to { text-shadow: 0 0 25px #ffb7e2; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 
-  p { color: #ddd; }
+  p { color: #ddd; margin-bottom: 10px; }
 
-  /* ===== Video Section ===== */
-  .video-wrap {
-    position: relative;
-    width: 100%;
-    background: rgba(0,0,0,0.5);
-    border: 2px solid rgba(255,192,203,0.3);
-    border-radius: 12px;
-    overflow: hidden;
-    margin-top: 15px;
-    box-shadow: 0 0 20px rgba(255,105,180,0.3);
-  }
-
-  video {
-    width: 100%;
-    height: auto;
-    background: #000;
-  }
-
-  button, input {
-    margin: 5px; padding: 8px 14px;
-    border-radius: 6px; border: none;
-    cursor: pointer;
-    background: #243b72;
-    color: #fff;
-    font-size: 15px;
-    box-shadow: 0 0 10px rgba(255,105,180,0.4);
-    transition: all 0.3s;
-  }
-
-  button:hover {
-    background: #355ec9;
-    box-shadow: 0 0 15px rgba(255,105,180,0.7);
+  input, button {
+    margin: 6px; padding: 10px 14px;
+    border: none; border-radius: 8px;
+    font-size: 15px; cursor: pointer;
   }
 
   input {
-    background: #1a1a40;
+    background: rgba(255,255,255,0.1);
     color: #fff;
     border: 1px solid #555;
   }
 
+  button {
+    background: #ff80bf;
+    color: white;
+    transition: 0.3s;
+  }
+  button:hover { background: #ff4fa3; transform: scale(1.05); }
+
+  .video-wrap {
+    position: relative;
+    width: 100%;
+    background: #000;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-top: 10px;
+    box-shadow: 0 0 20px rgba(255,128,191,0.3);
+  }
+  video { width: 100%; height: auto; background: #000; }
+
   #fullscreenBtn {
     position: absolute;
-    bottom: 10px;
-    right: 10px;
+    bottom: 10px; right: 10px;
     background: rgba(255,255,255,0.2);
-    color: white;
-    font-size: 20px;
-    border-radius: 6px;
-    padding: 6px 10px;
+    color: white; font-size: 20px;
+    border-radius: 6px; padding: 6px 10px;
+    border: none; cursor: pointer;
+    transition: 0.3s;
+  }
+  #fullscreenBtn:hover { background: rgba(255,255,255,0.4); }
+
+  #watchStatus {
+    color: #ffb7e2;
+    text-shadow: 0 0 10px #ff80bf;
+    animation: pulseGlow 2s infinite alternate;
+    font-size: 18px;
+    margin-top: 5px;
+  }
+  @keyframes pulseGlow {
+    from { opacity: 0.8; text-shadow: 0 0 10px #ff80bf; }
+    to { opacity: 1; text-shadow: 0 0 25px #ffb7e2; }
   }
 
-  #fullscreenBtn:hover {
-    background: rgba(255,255,255,0.4);
-  }
-
-  /* ===== Floating Hearts ===== */
+  /* Floating Hearts */
   .heart {
     position: fixed;
-    bottom: -20px;
+    bottom: 0;
     color: #ff80bf;
-    font-size: 20px;
-    animation: floatHearts 6s linear infinite;
-    opacity: 0.7;
+    animation: floatUp 6s linear forwards;
+    opacity: 0.8;
     z-index: 1;
   }
-
-  @keyframes floatHearts {
-    0% { transform: translateY(0) translateX(0) scale(1); opacity: 0.9; }
-    50% { opacity: 1; }
-    100% { transform: translateY(-120vh) translateX(calc(-50px + 100vw * var(--x))) scale(0.8); opacity: 0; }
+  @keyframes floatUp {
+    0% { transform: translateY(0) scale(1); opacity: 1; }
+    100% { transform: translateY(-110vh) scale(1.5); opacity: 0; }
   }
+
+  /* Floating sparkles */
+  .sparkle {
+    position: fixed;
+    width: 6px; height: 6px;
+    background: radial-gradient(circle, #ffb7e2 0%, transparent 70%);
+    border-radius: 50%;
+    animation: sparkleMove 8s linear infinite;
+  }
+  @keyframes sparkleMove {
+    from { transform: translateY(100vh) translateX(0); opacity: 1; }
+    to { transform: translateY(-10vh) translateX(20vw); opacity: 0; }
+  }
+
+  /* Emoji reaction */
+  .reaction {
+    position: absolute;
+    font-size: 26px;
+    animation: floatUpReaction 1.5s ease-out forwards;
+    pointer-events: none;
+  }
+  @keyframes floatUpReaction {
+    from { transform: translateY(0); opacity: 1; }
+    to { transform: translateY(-80px); opacity: 0; }
+  }
+
+  #status { margin-top: 10px; font-size: 14px; color: #aaa; }
 </style>
 </head>
+
 <body>
-
-<!-- ❤️ Floating Hearts -->
-<script>
-  setInterval(() => {
-    const heart = document.createElement('div');
-    heart.className = 'heart';
-    heart.textContent = '❤';
-    heart.style.left = Math.random() * 100 + 'vw';
-    heart.style.animationDuration = (4 + Math.random() * 3) + 's';
-    heart.style.setProperty('--x', Math.random());
-    document.body.appendChild(heart);
-    setTimeout(() => heart.remove(), 7000);
-  }, 500);
-</script>
-
-<!-- 🌸 Main App -->
 <main>
-  <h1>🎥 Watch Together</h1>
-  <p>Share your screen + voice and enjoy together 💬</p>
+  <h1>🎬 Watch Together</h1>
+  <div id="watchStatus" style="display:none;">✨ Now watching together... ✨</div>
+  <p>Share your screen + voice and enjoy a movie night together.</p>
 
   <input id="roomIdInput" placeholder="Enter room ID..." />
   <div>
@@ -138,7 +150,7 @@
     <button id="hangupBtn">Hang Up</button>
   </div>
 
-  <h3>Remote Stream (movie + voice)</h3>
+  <h3>Remote Stream</h3>
   <div class="video-wrap">
     <video id="remoteVideo" autoplay playsinline></video>
     <button id="fullscreenBtn">⛶</button>
@@ -150,11 +162,50 @@
   </div>
 
   <p id="status">Status: idle</p>
-
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-  <script src="app.js"></script>
 </main>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<script src="app.js"></script>
+
+<script>
+  // === Floating Hearts ===
+  function createHeart() {
+    const heart = document.createElement("div");
+    heart.classList.add("heart");
+    heart.textContent = "💖";
+    heart.style.left = Math.random() * 100 + "vw";
+    heart.style.fontSize = Math.random() * 20 + 15 + "px";
+    heart.style.animationDuration = 4 + Math.random() * 3 + "s";
+    document.body.appendChild(heart);
+    setTimeout(() => heart.remove(), 7000);
+  }
+  setInterval(createHeart, 800);
+
+  // === Background Sparkles ===
+  function createSparkle() {
+    const s = document.createElement("div");
+    s.classList.add("sparkle");
+    s.style.left = Math.random() * 100 + "vw";
+    s.style.animationDuration = 6 + Math.random() * 4 + "s";
+    document.body.appendChild(s);
+    setTimeout(() => s.remove(), 10000);
+  }
+  setInterval(createSparkle, 500);
+
+  // === Emoji Reactions ===
+  document.body.addEventListener("click", e => {
+    const emojiList = ['🎬','💬','😂','💗','⭐'];
+    const emoji = document.createElement('div');
+    emoji.textContent = emojiList[Math.floor(Math.random()*emojiList.length)];
+    emoji.classList.add('reaction');
+    emoji.style.left = e.clientX + 'px';
+    emoji.style.top = e.clientY + 'px';
+    document.body.appendChild(emoji);
+    setTimeout(() => emoji.remove(), 1500);
+  });
+</script>
 </body>
 </html>
 
