@@ -11,7 +11,9 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-const servers = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
+const servers = {
+  iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+};
 let pc, roomRef, isCreator = false;
 let screenStream, micStream, mixedStream;
 const remoteVideo = document.getElementById("remoteVideo");
@@ -62,19 +64,28 @@ function makeConnection() {
     remoteVideo.srcObject = e.streams[0];
   };
 
-  // 🔥 Boost bitrate whenever negotiation occurs
+  // 💎 Improve video quality aggressively
   pc.onnegotiationneeded = async () => {
     const senders = pc.getSenders();
-    senders.forEach(sender => {
+    for (const sender of senders) {
       if (sender.track && sender.track.kind === "video") {
         const params = sender.getParameters();
         if (!params.encodings) params.encodings = [{}];
-        params.encodings[0].maxBitrate = 5_000_000; // 5 Mbps
+
+        params.encodings[0].maxBitrate = 8_000_000;  // 8 Mbps
+        params.encodings[0].minBitrate = 3_000_000;  // 3 Mbps
         params.encodings[0].maxFramerate = 60;
+        params.encodings[0].scaleResolutionDownBy = 1; // Keep full res
+
         sender.setParameters(params).catch(console.warn);
       }
-    });
+    }
   };
+
+  // 🧩 Make playback smoother
+  remoteVideo.addEventListener("loadedmetadata", () => {
+    remoteVideo.play().catch(() => {});
+  });
 
   return pc;
 }
@@ -89,38 +100,28 @@ async function createRoom() {
   log("Creating room: " + roomId);
 
   try {
-    // Ask mic permission FIRST (avoids Chrome blocking)
     micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    log("🎤 Mic access granted");
-
-    // Then ask for screen (in same gesture)
     screenStream = await navigator.mediaDevices.getDisplayMedia({
       video: {
         width: { ideal: 1920 },
         height: { ideal: 1080 },
-        frameRate: { ideal: 30, max: 60 }
+        frameRate: { ideal: 60, max: 60 }
       },
       audio: true
     });
-    log("🖥️ Screen share granted");
   } catch (err) {
     alert("Screen or mic permission denied.");
     console.error(err);
     return;
   }
 
-  // ✅ Combine both mic + screen audio
   const audioContext = new AudioContext();
   const destination = audioContext.createMediaStreamDestination();
 
-  if (screenStream.getAudioTracks().length > 0) {
-    const sAudio = audioContext.createMediaStreamSource(screenStream);
-    sAudio.connect(destination);
-  }
-  if (micStream.getAudioTracks().length > 0) {
-    const mAudio = audioContext.createMediaStreamSource(micStream);
-    mAudio.connect(destination);
-  }
+  if (screenStream.getAudioTracks().length > 0)
+    audioContext.createMediaStreamSource(screenStream).connect(destination);
+  if (micStream.getAudioTracks().length > 0)
+    audioContext.createMediaStreamSource(micStream).connect(destination);
 
   mixedStream = new MediaStream([
     ...screenStream.getVideoTracks(),
@@ -132,7 +133,7 @@ async function createRoom() {
   pc = makeConnection();
   mixedStream.getTracks().forEach(t => pc.addTrack(t, mixedStream));
 
-  const offer = await pc.createOffer();
+  const offer = await pc.createOffer({ offerToReceiveVideo: true, offerToReceiveAudio: true });
   await pc.setLocalDescription(offer);
   await roomRef.set({ offer: { type: offer.type, sdp: offer.sdp } });
 
@@ -169,7 +170,6 @@ async function joinRoom() {
 
   await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
 
-  // Ask mic access to talk
   try {
     micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
     micStream.getTracks().forEach(t => pc.addTrack(t, micStream));
@@ -202,7 +202,4 @@ async function hangUp() {
   localVideo.srcObject = null;
   log("Idle");
 }
-
-
-
 
